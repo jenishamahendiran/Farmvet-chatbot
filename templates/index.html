@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farmwet Chatbot</title>
+  <style>
+    :root {
+      --bg: #f4f8f1;
+      --panel: rgba(255,255,255,.92);
+      --primary: #2f6b3f;
+      --primary-dark: #214e2e;
+      --soft: #e7f1e3;
+      --text: #203027;
+      --muted: #718078;
+      --border: #dce7dc;
+      --user: #dcefd7;
+      --bot: #ffffff;
+      --shadow: 0 18px 50px rgba(35, 75, 45, .12);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(126,170,108,.20), transparent 28%),
+        radial-gradient(circle at 90% 90%, rgba(74,130,86,.13), transparent 30%),
+        var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .app {
+      width: min(1100px, 96vw);
+      height: 94vh;
+      margin: 3vh auto;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.72);
+    }
+
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .logo {
+      width: 45px; height: 45px; border-radius: 14px;
+      display: grid; place-items: center;
+      background: var(--primary);
+      color: white; font-size: 22px;
+      box-shadow: 0 8px 20px rgba(47,107,63,.25);
+    }
+    h1 { margin: 0; font-size: 19px; letter-spacing: -.2px; }
+    .subtitle { margin-top: 3px; color: var(--muted); font-size: 12px; }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    #newChat {
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #edf4eb;
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+    #newChat:hover { background: #e1edde; }
+
+    #chat {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 28px clamp(14px, 4vw, 48px);
+      scroll-behavior: smooth;
+    }
+
+    .welcome {
+      max-width: 650px;
+      margin: 8vh auto;
+      text-align: center;
+      padding: 25px;
+    }
+    .welcome-icon { font-size: 42px; margin-bottom: 10px; }
+    .welcome h2 { margin: 0 0 8px; font-size: 25px; }
+    .welcome p { margin: 0; color: var(--muted); line-height: 1.6; }
+
+    .message {
+      display: flex;
+      margin: 0 auto 18px;
+      max-width: 820px;
+    }
+    .message.user { justify-content: flex-end; }
+    .bubble {
+      max-width: min(78%, 700px);
+      padding: 13px 16px;
+      border-radius: 18px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      box-shadow: 0 5px 18px rgba(40,70,45,.05);
+    }
+    .user .bubble {
+      background: var(--user);
+      border-bottom-right-radius: 5px;
+    }
+    .model .bubble {
+      background: var(--bot);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 5px;
+    }
+    .error .bubble { background: #fff2f0; border-color: #f0cbc5; color: #8b3028; }
+
+    .typing {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .typing span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--primary);
+      animation: blink 1s infinite ease-in-out;
+    }
+    .typing span:nth-child(2) { animation-delay: .15s; }
+    .typing span:nth-child(3) { animation-delay: .3s; }
+    @keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+    .composer {
+      padding: 15px 20px 19px;
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,.78);
+    }
+    form {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      background: white;
+      box-shadow: 0 7px 24px rgba(35,75,45,.07);
+    }
+    textarea {
+      flex: 1;
+      min-height: 42px;
+      max-height: 130px;
+      resize: none;
+      border: 0;
+      outline: 0;
+      padding: 10px 8px;
+      font: inherit;
+      color: var(--text);
+      background: transparent;
+    }
+    #send {
+      width: 44px; height: 44px;
+      border-radius: 13px;
+      background: var(--primary);
+      color: white;
+      font-size: 18px;
+      flex: 0 0 auto;
+    }
+    #send:hover { background: var(--primary-dark); }
+    #send:disabled { opacity: .55; cursor: not-allowed; }
+    .hint {
+      max-width: 820px;
+      margin: 7px auto 0;
+      color: var(--muted);
+      font-size: 11px;
+      padding-left: 5px;
+    }
+
+    @media (max-width: 650px) {
+      .app { width: 100vw; height: 100vh; margin: 0; border-radius: 0; }
+      header { padding: 14px; }
+      #chat { padding: 20px 12px; }
+      .bubble { max-width: 88%; }
+      .subtitle { display: none; }
+      #newChat { padding: 9px 11px; font-size: 12px; }
+      .composer { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true">🌱</div>
+        <div>
+          <h1>Farmwet Chatbot</h1>
+          <div class="subtitle">Study & learning assistant for the Farmwet domain</div>
+        </div>
+      </div>
+      <button id="newChat" type="button">＋ New chat</button>
+    </header>
+
+    <section id="chat" aria-live="polite">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🌾</div>
+        <h2>Learn Farmwet with ease</h2>
+        <p>Ask questions about the Farmwet chatbot, its concepts, architecture, workflow, implementation, or presentation.</p>
+      </div>
+    </section>
+
+    <div class="composer">
+      <form id="form">
+        <textarea id="input" rows="1" maxlength="6000" placeholder="Ask a Farmwet-related question..." aria-label="Message"></textarea>
+        <button id="send" type="submit" aria-label="Send message">➤</button>
+      </form>
+      <div class="hint">Enter to send · Shift + Enter for a new line</div>
+    </div>
+  </main>
+
+  <script>
+    const chat = document.getElementById("chat");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const send = document.getElementById("send");
+    const newChat = document.getElementById("newChat");
+    const welcome = document.getElementById("welcome");
+
+    let history = [];
+    let busy = false;
+
+    function scrollToBottom(force = false) {
+      requestAnimationFrame(() => {
+        chat.scrollTop = chat.scrollHeight;
+        if (force) setTimeout(() => chat.scrollTop = chat.scrollHeight, 40);
+      });
+    }
+
+    function addMessage(role, text, isError = false) {
+      if (welcome) welcome.remove();
+      const row = document.createElement("div");
+      row.className = `message ${role}${isError ? " error" : ""}`;
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = text;
+
+      row.appendChild(bubble);
+      chat.appendChild(row);
+      scrollToBottom(true);
+      return row;
+    }
+
+    function addTyping() {
+      if (welcome) welcome.remove();
+      const row = document.createElement("div");
+      row.className = "message model";
+      row.id = "typing";
+      row.innerHTML = '<div class="bubble"><span class="typing"><span></span><span></span><span></span></span></div>';
+      chat.appendChild(row);
+      scrollToBottom(true);
+    }
+
+    function autoResize() {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 130) + "px";
+    }
+
+    input.addEventListener("input", autoResize);
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text || busy) return;
+
+      busy = true;
+      send.disabled = true;
+      input.disabled = true;
+
+      history.push({ role: "user", text });
+      addMessage("user", text);
+      input.value = "";
+      autoResize();
+      addTyping();
+
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ history })
+        });
+
+        const data = await response.json();
+        document.getElementById("typing")?.remove();
+
+        if (!response.ok) throw new Error(data.error || "Something went wrong.");
+
+        history.push({ role: "model", text: data.reply });
+        addMessage("model", data.reply);
+      } catch (error) {
+        addMessage("model", error.message || "Please try again.", true);
+        history.pop();
+      } finally {
+        busy = false;
+        send.disabled = false;
+        input.disabled = false;
+        input.focus();
+        scrollToBottom(true);
+      }
+    });
+
+    newChat.addEventListener("click", () => {
+      history = [];
+      chat.innerHTML = `
+        <div class="welcome" id="welcome">
+          <div class="welcome-icon">🌾</div>
+          <h2>New Farmwet chat</h2>
+          <p>Start a fresh Farmwet-related study or learning conversation.</p>
+        </div>`;
+      input.value = "";
+      autoResize();
+      input.focus();
+      scrollToBottom(true);
+    });
+
+    window.addEventListener("resize", () => scrollToBottom());
+    input.focus();
+  </script>
+</body>
+</html>
